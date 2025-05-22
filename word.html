@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>背单词</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        color: #333;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        min-height: 100vh;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .header h1 {
+        color: white;
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+      }
+
+      .controls {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      }
+
+      .control-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+      }
+
+      .control-row:last-child {
+        margin-bottom: 0;
+      }
+
+      input,
+      select,
+      button {
+        padding: 12px 16px;
+        border: 2px solid #e1e5e9;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+      }
+
+      input:focus,
+      select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      button {
+        background: #667eea;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        min-width: 120px;
+      }
+
+      button:hover {
+        background: #5a6fd8;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      .btn-secondary {
+        background: #6c757d;
+      }
+
+      .btn-secondary:hover {
+        background: #5a6268;
+      }
+
+      .btn-danger {
+        background: #dc3545;
+      }
+
+      .btn-danger:hover {
+        background: #c82333;
+      }
+
+      .btn-success {
+        background: #28a745;
+      }
+
+      .btn-success:hover {
+        background: #218838;
+      }
+
+      .group-selector {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      .word-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+      }
+
+      .word-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .word-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 0;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      .word-item:last-child {
+        border-bottom: none;
+      }
+
+      .word-content {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-right: 20px;
+      }
+
+      .word-text {
+        font-size: 18px;
+        padding: 10px 15px;
+        border-radius: 8px;
+        background: #f8f9fa;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+      }
+
+      .word-text.hidden {
+        background: #e9ecef;
+        color: transparent;
+        text-shadow: 0 0 8px #666;
+        user-select: none;
+      }
+
+      .word-text.hidden::after {
+        content: "点击显示";
+        color: #6c757d;
+        font-size: 14px;
+        text-shadow: none;
+      }
+
+      .word-text:hover {
+        background: #e9ecef;
+      }
+
+      .word-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .word-status {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+        font-size: 20px;
+        transition: all 0.3s ease;
+      }
+
+      .status-unknown {
+        background: #e9ecef;
+        color: #6c757d;
+      }
+
+      .status-familiar {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .status-unfamiliar {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .delete-word {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+        font-size: 18px;
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      .modal-content {
+        background-color: white;
+        margin: 5% auto;
+        padding: 30px;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
+
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        line-height: 1;
+      }
+
+      .close:hover {
+        color: #000;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+      }
+
+      .empty-state h3 {
+        margin-bottom: 10px;
+        font-size: 24px;
+      }
+
+      .stats {
+        display: flex;
+        justify-content: space-around;
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .stat-item {
+        text-align: center;
+      }
+
+      .stat-number {
+        font-size: 24px;
+        font-weight: bold;
+        color: #667eea;
+      }
+
+      .stat-label {
+        font-size: 14px;
+        color: #6c757d;
+        margin-top: 5px;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 15px;
+        }
+
+        .header h1 {
+          font-size: 2rem;
+        }
+
+        .word-content {
+          grid-template-columns: 1fr;
+          gap: 10px;
+        }
+
+        .control-row {
+          flex-direction: column;
+        }
+
+        .control-row input,
+        .control-row select,
+        .control-row button {
+          width: 100%;
+        }
+
+        .group-selector {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .stats {
+          flex-direction: column;
+          gap: 15px;
+        }
+
+        .word-actions {
+          flex-direction: column;
+        }
+      }
+
+      .toggle-buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      .filter-unfamiliar {
+        background: #ffc107;
+        color: #212529;
+      }
+
+      .filter-unfamiliar:hover {
+        background: #e0a800;
+      }
+
+      .filter-unfamiliar.active {
+        background: #fd7e14;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>📚 背单词</h1>
+      </div>
+
+      <div class="controls">
+        <div class="control-row">
+          <input type="text" id="groupName" placeholder="输入新组别名称" />
+          <button onclick="addGroup()">添加组别</button>
+        </div>
+
+        <div class="control-row">
+          <input type="text" id="englishWord" placeholder="英文单词/短语" />
+          <input type="text" id="chineseMeaning" placeholder="中文释义" />
+          <button onclick="addWord()">添加单词</button>
+        </div>
+      </div>
+
+      <div class="group-selector">
+        <select id="groupSelect" onchange="switchGroup()">
+          <option value="">选择组别</option>
+        </select>
+        <button onclick="deleteCurrentGroup()" class="btn-danger">
+          删除当前组
+        </button>
+      </div>
+
+      <div class="toggle-buttons">
+        <button
+          onclick="toggleHideMode('chinese')"
+          id="hideChinese"
+          class="btn-secondary"
+        >
+          隐藏中文
+        </button>
+        <button
+          onclick="toggleHideMode('english')"
+          id="hideEnglish"
+          class="btn-secondary"
+        >
+          隐藏英文
+        </button>
+        <button
+          onclick="switchLanguage()"
+          id="switchLang"
+          class="btn-secondary"
+        >
+          中英互换
+        </button>
+        <button
+          onclick="toggleUnfamiliarFilter()"
+          id="filterBtn"
+          class="filter-unfamiliar"
+        >
+          仅显示不熟单词
+        </button>
+      </div>
+
+      <div class="stats" id="stats">
+        <div class="stat-item">
+          <div class="stat-number" id="totalWords">0</div>
+          <div class="stat-label">总单词数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" id="familiarWords">0</div>
+          <div class="stat-label">已掌握</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" id="unfamiliarWords">0</div>
+          <div class="stat-label">待复习</div>
+        </div>
+      </div>
+
+      <div id="wordsList">
+        <div class="empty-state">
+          <h3>还没有单词</h3>
+          <p>请先添加组别，然后添加单词开始学习</p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let groups = JSON.parse(localStorage.getItem("vocabularyGroups")) || {};
+      let currentGroup = localStorage.getItem("currentGroup") || "";
+      let hideMode = "none"; // 'chinese', 'english', 'none'
+      let isLanguageSwitched = false;
+      let showOnlyUnfamiliar = false;
+
+      function saveData() {
+        localStorage.setItem("vocabularyGroups", JSON.stringify(groups));
+        localStorage.setItem("currentGroup", currentGroup);
+      }
+
+      function addGroup() {
+        const groupName = document.getElementById("groupName").value.trim();
+        if (!groupName) {
+          alert("请输入组别名称");
+          return;
+        }
+        if (groups[groupName]) {
+          alert("组别已存在");
+          return;
+        }
+        groups[groupName] = [];
+        document.getElementById("groupName").value = "";
+        updateGroupSelector();
+        saveData();
+      }
+
+      function addWord() {
+        if (!currentGroup) {
+          alert("请先选择组别");
+          return;
+        }
+        const english = document.getElementById("englishWord").value.trim();
+        const chinese = document.getElementById("chineseMeaning").value.trim();
+
+        if (!english || !chinese) {
+          alert("请输入英文和中文");
+          return;
+        }
+
+        const word = {
+          id: Date.now(),
+          english: english,
+          chinese: chinese,
+          status: "unknown", // 'unknown', 'familiar', 'unfamiliar'
+        };
+
+        groups[currentGroup].push(word);
+        document.getElementById("englishWord").value = "";
+        document.getElementById("chineseMeaning").value = "";
+        displayWords();
+        saveData();
+      }
+
+      function deleteWord(groupName, wordId) {
+        if (confirm("确定要删除这个单词吗？")) {
+          groups[groupName] = groups[groupName].filter(
+            (word) => word.id !== wordId
+          );
+          displayWords();
+          saveData();
+        }
+      }
+
+      function deleteCurrentGroup() {
+        if (!currentGroup) {
+          alert("请先选择组别");
+          return;
+        }
+        if (confirm(`确定要删除组别"${currentGroup}"及其所有单词吗？`)) {
+          delete groups[currentGroup];
+          currentGroup = "";
+          updateGroupSelector();
+          displayWords();
+          saveData();
+        }
+      }
+
+      function updateGroupSelector() {
+        const select = document.getElementById("groupSelect");
+        select.innerHTML = '<option value="">选择组别</option>';
+
+        Object.keys(groups).forEach((groupName) => {
+          const option = document.createElement("option");
+          option.value = groupName;
+          option.textContent = `${groupName} (${groups[groupName].length})`;
+          select.appendChild(option);
+        });
+
+        select.value = currentGroup;
+      }
+
+      function switchGroup() {
+        const select = document.getElementById("groupSelect");
+        currentGroup = select.value;
+        displayWords();
+        saveData();
+      }
+
+      function toggleWordStatus(groupName, wordId) {
+        const word = groups[groupName].find((w) => w.id === wordId);
+        if (word) {
+          const statusCycle = ["unknown", "familiar", "unfamiliar"];
+          const currentIndex = statusCycle.indexOf(word.status);
+          word.status = statusCycle[(currentIndex + 1) % statusCycle.length];
+          displayWords();
+          saveData();
+        }
+      }
+
+      function toggleHideMode(mode) {
+        hideMode = hideMode === mode ? "none" : mode;
+        updateToggleButtons();
+        displayWords();
+      }
+
+      function switchLanguage() {
+        isLanguageSwitched = !isLanguageSwitched;
+        updateToggleButtons();
+        displayWords();
+      }
+
+      function toggleUnfamiliarFilter() {
+        showOnlyUnfamiliar = !showOnlyUnfamiliar;
+        updateToggleButtons();
+        displayWords();
+      }
+
+      function updateToggleButtons() {
+        const hideChinese = document.getElementById("hideChinese");
+        const hideEnglish = document.getElementById("hideEnglish");
+        const switchLang = document.getElementById("switchLang");
+        const filterBtn = document.getElementById("filterBtn");
+
+        hideChinese.className =
+          hideMode === "chinese" ? "btn-success" : "btn-secondary";
+        hideEnglish.className =
+          hideMode === "english" ? "btn-success" : "btn-secondary";
+        switchLang.className = isLanguageSwitched
+          ? "btn-success"
+          : "btn-secondary";
+        filterBtn.className = showOnlyUnfamiliar
+          ? "filter-unfamiliar active"
+          : "filter-unfamiliar";
+
+        hideChinese.textContent =
+          hideMode === "chinese" ? "显示中文" : "隐藏中文";
+        hideEnglish.textContent =
+          hideMode === "english" ? "显示英文" : "隐藏英文";
+        switchLang.textContent = isLanguageSwitched ? "恢复顺序" : "中英互换";
+        filterBtn.textContent = showOnlyUnfamiliar
+          ? "显示全部"
+          : "仅显示不熟单词";
+      }
+
+      function revealText(element) {
+        if (element.classList.contains("hidden")) {
+          element.classList.remove("hidden");
+        }
+      }
+
+      function getStatusIcon(status) {
+        switch (status) {
+          case "familiar":
+            return "✓";
+          case "unfamiliar":
+            return "✗";
+          default:
+            return "?";
+        }
+      }
+
+      function getStatusClass(status) {
+        switch (status) {
+          case "familiar":
+            return "status-familiar";
+          case "unfamiliar":
+            return "status-unfamiliar";
+          default:
+            return "status-unknown";
+        }
+      }
+
+      function updateStats() {
+        if (!currentGroup || !groups[currentGroup]) {
+          document.getElementById("totalWords").textContent = "0";
+          document.getElementById("familiarWords").textContent = "0";
+          document.getElementById("unfamiliarWords").textContent = "0";
+          return;
+        }
+
+        const words = groups[currentGroup];
+        const total = words.length;
+        const familiar = words.filter((w) => w.status === "familiar").length;
+        const unfamiliar = words.filter(
+          (w) => w.status === "unfamiliar"
+        ).length;
+
+        document.getElementById("totalWords").textContent = total;
+        document.getElementById("familiarWords").textContent = familiar;
+        document.getElementById("unfamiliarWords").textContent = unfamiliar;
+      }
+
+      function displayWords() {
+        const wordsContainer = document.getElementById("wordsList");
+
+        if (
+          !currentGroup ||
+          !groups[currentGroup] ||
+          groups[currentGroup].length === 0
+        ) {
+          wordsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <h3>${!currentGroup ? "请选择组别" : "暂无单词"}</h3>
+                        <p>${
+                          !currentGroup
+                            ? "请先选择一个组别"
+                            : '点击上方"添加单词"开始添加'
+                        }</p>
+                    </div>
+                `;
+          updateStats();
+          return;
+        }
+
+        let wordsToShow = groups[currentGroup];
+
+        // 筛选不熟悉的单词
+        if (showOnlyUnfamiliar) {
+          wordsToShow = wordsToShow.filter(
+            (word) => word.status === "unfamiliar"
+          );
+        }
+
+        if (wordsToShow.length === 0) {
+          wordsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <h3>没有符合条件的单词</h3>
+                        <p>当前筛选条件下没有单词显示</p>
+                    </div>
+                `;
+          updateStats();
+          return;
+        }
+
+        const wordsHtml = wordsToShow
+          .map((word) => {
+            const leftText = isLanguageSwitched ? word.chinese : word.english;
+            const rightText = isLanguageSwitched ? word.english : word.chinese;
+            const leftHide =
+              (hideMode === "chinese" && !isLanguageSwitched) ||
+              (hideMode === "english" && isLanguageSwitched);
+            const rightHide =
+              (hideMode === "english" && !isLanguageSwitched) ||
+              (hideMode === "chinese" && isLanguageSwitched);
+
+            return `
+                    <div class="word-item">
+                        <div class="word-content">
+                            <div class="word-text ${
+                              leftHide ? "hidden" : ""
+                            }" onclick="revealText(this)">
+                                ${leftText}
+                            </div>
+                            <div class="word-text ${
+                              rightHide ? "hidden" : ""
+                            }" onclick="revealText(this)">
+                                ${rightText}
+                            </div>
+                        </div>
+                        <div class="word-actions">
+                            <button class="word-status ${getStatusClass(
+                              word.status
+                            )}" 
+                                    onclick="toggleWordStatus('${currentGroup}', ${
+              word.id
+            })"
+                                    title="点击切换状态: 未知 → 熟悉 → 不熟 → 未知">
+                                ${getStatusIcon(word.status)}
+                            </button>
+                            <button class="delete-word" onclick="deleteWord('${currentGroup}', ${
+              word.id
+            })">×</button>
+                        </div>
+                    </div>
+                `;
+          })
+          .join("");
+
+        wordsContainer.innerHTML = `
+                <div class="word-card">
+                    <h3 style="margin-bottom: 20px; color: #667eea;">${currentGroup}</h3>
+                    ${wordsHtml}
+                </div>
+            `;
+
+        updateStats();
+      }
+
+      // 初始化
+      function init() {
+        updateGroupSelector();
+        displayWords();
+        updateToggleButtons();
+      }
+
+      // 页面加载完成后初始化
+      document.addEventListener("DOMContentLoaded", init);
+    </script>
+  </body>
+</html>
