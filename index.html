@@ -2,173 +2,394 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
     <title>背单词</title>
     <style>
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
       }
 
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
+          "Helvetica Neue", sans-serif;
+        background: #f8f9fa;
         color: #333;
+        line-height: 1.6;
+        overflow-x: hidden;
       }
 
       .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 20px;
+        max-width: 100vw;
         min-height: 100vh;
+        background: white;
       }
 
       .header {
-        text-align: center;
-        margin-bottom: 30px;
+        background: white;
+        border-bottom: 1px solid #e9ecef;
+        padding: 12px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 100;
       }
 
       .header h1 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .sync-status {
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 12px;
+        background: #e9ecef;
+        color: #6c757d;
+      }
+
+      .sync-status.syncing {
+        background: #fff3cd;
+        color: #856404;
+      }
+
+      .sync-status.synced {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .sync-status.error {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .add-group-btn {
+        width: 36px;
+        height: 36px;
+        border: 2px solid #dee2e6;
+        background: white;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: #6c757d;
+        transition: all 0.2s ease;
+        touch-action: manipulation;
+      }
+
+      .add-group-btn:hover,
+      .add-group-btn:active {
+        border-color: #333;
+        color: #333;
+        transform: scale(0.95);
+      }
+
+      .tab-container {
+        border-bottom: 1px solid #e9ecef;
+        background: white;
+        position: sticky;
+        top: var(--header-height, 60px);
+        z-index: 99;
+      }
+
+      .tabs {
+        display: flex;
+        padding: 0 16px;
+      }
+
+      .tab {
+        flex: 1;
+        padding: 14px 20px;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        color: #6c757d;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-align: center;
+        touch-action: manipulation;
+      }
+
+      .tab:active {
+        transform: scale(0.98);
+      }
+
+      .tab.active {
+        color: #333;
+        border-bottom-color: #333;
+      }
+
+      .main-content {
+        display: block;
+        min-height: calc(100vh - 120px);
+      }
+
+      .sidebar {
+        width: 100%;
+        background: #fafbfc;
+        border-bottom: 1px solid #e9ecef;
+        padding: 16px 0;
+        max-height: 200px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .group-list-container {
+        display: flex;
+        gap: 12px;
+        padding: 0 16px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+
+      .group-list-container::-webkit-scrollbar {
+        display: none;
+      }
+
+      .group-item {
+        min-width: 120px;
+        padding: 12px 16px;
+        cursor: pointer;
+        border: 1px solid #e9ecef;
+        border-radius: 20px;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        background: white;
+        touch-action: manipulation;
+        white-space: nowrap;
+      }
+
+      .group-item:active {
+        transform: scale(0.95);
+      }
+
+      .group-item.active {
+        background: #333;
         color: white;
-        font-size: 2.5rem;
-        margin-bottom: 10px;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        border-color: #333;
+      }
+
+      .group-name {
+        font-weight: 500;
+        font-size: 14px;
+      }
+
+      .group-count {
+        font-size: 12px;
+        opacity: 0.8;
+      }
+
+      .content-area {
+        padding: 16px;
+      }
+
+      .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .content-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        flex: 1;
+        min-width: 0;
       }
 
       .controls {
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        margin-bottom: 30px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-      }
-
-      .control-row {
         display: flex;
-        gap: 10px;
-        margin-bottom: 15px;
+        gap: 6px;
         flex-wrap: wrap;
       }
 
-      .control-row:last-child {
+      .toggle-btn {
+        padding: 6px 12px;
+        border: 1px solid #dee2e6;
+        background: white;
+        border-radius: 16px;
+        cursor: pointer;
+        font-size: 12px;
+        color: #6c757d;
+        transition: all 0.2s ease;
+        touch-action: manipulation;
+        white-space: nowrap;
+      }
+
+      .toggle-btn:active {
+        transform: scale(0.95);
+      }
+
+      .toggle-btn.active {
+        background: #333;
+        color: white;
+        border-color: #333;
+      }
+
+      .add-word-form {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 20px;
+        display: none;
+      }
+
+      .add-word-form.show {
+        display: block;
+      }
+
+      .form-row {
+        margin-bottom: 12px;
+      }
+
+      .form-row:last-child {
         margin-bottom: 0;
       }
 
-      input,
-      select,
-      button {
+      input[type="text"],
+      textarea {
+        width: 100%;
         padding: 12px 16px;
-        border: 2px solid #e1e5e9;
+        border: 1px solid #dee2e6;
         border-radius: 8px;
         font-size: 16px;
-        transition: all 0.3s ease;
+        background: white;
+        transition: border-color 0.2s ease;
+        -webkit-appearance: none;
       }
 
-      input:focus,
-      select:focus {
+      input[type="text"]:focus,
+      textarea:focus {
         outline: none;
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: #333;
       }
 
-      button {
-        background: #667eea;
-        color: white;
+      .form-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .btn {
+        flex: 1;
+        padding: 12px 16px;
         border: none;
+        border-radius: 8px;
         cursor: pointer;
-        font-weight: 600;
-        min-width: 120px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        touch-action: manipulation;
       }
 
-      button:hover {
-        background: #5a6fd8;
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+      .btn:active {
+        transform: scale(0.98);
       }
 
-      button:active {
-        transform: translateY(0);
+      .btn-primary {
+        background: #333;
+        color: white;
       }
 
       .btn-secondary {
         background: #6c757d;
-      }
-
-      .btn-secondary:hover {
-        background: #5a6268;
+        color: white;
       }
 
       .btn-danger {
         background: #dc3545;
+        color: white;
       }
 
-      .btn-danger:hover {
-        background: #c82333;
-      }
-
-      .btn-success {
-        background: #28a745;
-      }
-
-      .btn-success:hover {
-        background: #218838;
-      }
-
-      .group-selector {
-        display: flex;
-        gap: 10px;
-        align-items: center;
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
         margin-bottom: 20px;
-        flex-wrap: wrap;
+      }
+
+      .stat-item {
+        text-align: center;
+        padding: 16px 12px;
+        background: #f8f9fa;
+        border-radius: 12px;
+      }
+
+      .stat-number {
+        font-size: 20px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .stat-label {
+        font-size: 11px;
+        color: #6c757d;
+        margin-top: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .word-list {
+        display: grid;
+        gap: 12px;
       }
 
       .word-card {
         background: white;
-        border-radius: 15px;
-        padding: 25px;
-        margin-bottom: 20px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 16px;
+        transition: all 0.2s ease;
       }
 
-      .word-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-      }
-
-      .word-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 15px 0;
-        border-bottom: 1px solid #f0f0f0;
-      }
-
-      .word-item:last-child {
-        border-bottom: none;
+      .word-card:active {
+        transform: scale(0.98);
       }
 
       .word-content {
-        flex: 1;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        margin-right: 20px;
+        margin-bottom: 12px;
       }
 
       .word-text {
-        font-size: 18px;
-        padding: 10px 15px;
-        border-radius: 8px;
+        padding: 12px 16px;
         background: #f8f9fa;
+        border-radius: 8px;
         cursor: pointer;
-        transition: all 0.3s ease;
-        min-height: 50px;
+        transition: all 0.2s ease;
+        min-height: 44px;
         display: flex;
         align-items: center;
+        margin-bottom: 8px;
+        font-size: 16px;
+        touch-action: manipulation;
+      }
+
+      .word-text:last-child {
+        margin-bottom: 0;
       }
 
       .word-text.hidden {
@@ -176,583 +397,1194 @@
         color: transparent;
         text-shadow: 0 0 8px #666;
         user-select: none;
+        position: relative;
       }
 
       .word-text.hidden::after {
         content: "点击显示";
         color: #6c757d;
-        font-size: 14px;
+        font-size: 12px;
         text-shadow: none;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
       }
 
-      .word-text:hover {
-        background: #e9ecef;
+      .word-text:active {
+        transform: scale(0.98);
       }
 
       .word-actions {
         display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .status-buttons {
+        display: flex;
         gap: 8px;
       }
 
-      .word-status {
+      .status-btn {
         width: 40px;
         height: 40px;
+        border: 1px solid #dee2e6;
+        background: white;
         border-radius: 50%;
-        border: none;
         cursor: pointer;
-        font-size: 20px;
-        transition: all 0.3s ease;
+        font-size: 16px;
+        transition: all 0.2s ease;
+        touch-action: manipulation;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
-      .status-unknown {
-        background: #e9ecef;
-        color: #6c757d;
+      .status-btn:active {
+        transform: scale(0.9);
       }
 
-      .status-familiar {
+      .status-btn.familiar {
         background: #d4edda;
+        border-color: #c3e6cb;
         color: #155724;
       }
 
-      .status-unfamiliar {
+      .status-btn.unfamiliar {
         background: #f8d7da;
+        border-color: #f5c6cb;
         color: #721c24;
       }
 
-      .delete-word {
-        background: #dc3545;
-        color: white;
-        border: none;
-        border-radius: 50%;
+      .delete-btn {
         width: 40px;
         height: 40px;
+        border: 1px solid #f5c6cb;
+        background: #f8d7da;
+        color: #721c24;
+        border-radius: 8px;
         cursor: pointer;
-        font-size: 18px;
+        font-size: 16px;
+        transition: all 0.2s ease;
+        touch-action: manipulation;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .delete-btn:active {
+        transform: scale(0.9);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #6c757d;
+      }
+
+      .empty-state h3 {
+        margin-bottom: 8px;
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .empty-state p {
+        font-size: 14px;
       }
 
       .modal {
         display: none;
         position: fixed;
-        z-index: 1000;
-        left: 0;
         top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .modal.show {
+        display: flex;
       }
 
       .modal-content {
-        background-color: white;
-        margin: 5% auto;
-        padding: 30px;
-        border-radius: 15px;
-        width: 90%;
-        max-width: 500px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      }
-
-      .close {
-        color: #aaa;
-        float: right;
-        font-size: 28px;
-        font-weight: bold;
-        cursor: pointer;
-        line-height: 1;
-      }
-
-      .close:hover {
-        color: #000;
-      }
-
-      .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        color: #6c757d;
-      }
-
-      .empty-state h3 {
-        margin-bottom: 10px;
-        font-size: 24px;
-      }
-
-      .stats {
-        display: flex;
-        justify-content: space-around;
         background: white;
-        border-radius: 15px;
-        padding: 20px;
+        border-radius: 12px;
+        padding: 24px;
+        width: 100%;
+        max-width: 400px;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+
+      .modal-header {
         margin-bottom: 20px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
       }
 
-      .stat-item {
-        text-align: center;
+      .modal-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
       }
 
-      .stat-number {
-        font-size: 24px;
-        font-weight: bold;
-        color: #667eea;
+      .modal-body {
+        margin-bottom: 20px;
       }
 
-      .stat-label {
+      .modal-footer {
+        display: flex;
+        gap: 12px;
+      }
+
+      .github-config {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+
+      .github-config h4 {
+        margin-bottom: 12px;
         font-size: 14px;
-        color: #6c757d;
-        margin-top: 5px;
+        color: #333;
       }
 
+      .github-config input {
+        margin-bottom: 8px;
+      }
+
+      .github-config .help-text {
+        font-size: 12px;
+        color: #6c757d;
+        margin-top: 8px;
+      }
+
+      .radio-group {
+        display: flex;
+        gap: 16px;
+        margin-top: 8px;
+      }
+
+      .radio-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+      }
+
+      /* 移动端优化 */
       @media (max-width: 768px) {
-        .container {
-          padding: 15px;
+        .header {
+          padding: 10px 16px;
         }
 
         .header h1 {
-          font-size: 2rem;
+          font-size: 18px;
         }
 
-        .word-content {
-          grid-template-columns: 1fr;
-          gap: 10px;
-        }
-
-        .control-row {
-          flex-direction: column;
-        }
-
-        .control-row input,
-        .control-row select,
-        .control-row button {
-          width: 100%;
-        }
-
-        .group-selector {
+        .content-header {
           flex-direction: column;
           align-items: stretch;
+          gap: 16px;
+        }
+
+        .controls {
+          justify-content: center;
+        }
+
+        .toggle-btn {
+          font-size: 11px;
+          padding: 8px 12px;
+        }
+
+        .word-text {
+          font-size: 15px;
+          padding: 16px;
+          min-height: 50px;
+        }
+
+        .status-btn,
+        .delete-btn {
+          width: 44px;
+          height: 44px;
+          font-size: 18px;
         }
 
         .stats {
-          flex-direction: column;
-          gap: 15px;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 8px;
         }
 
-        .word-actions {
-          flex-direction: column;
+        .stat-item {
+          padding: 12px 8px;
+        }
+
+        .stat-number {
+          font-size: 18px;
+        }
+
+        .modal-content {
+          margin: 20px;
+          padding: 20px;
         }
       }
 
-      .toggle-buttons {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 20px;
-        flex-wrap: wrap;
+      @media (max-width: 480px) {
+        .header h1 {
+          font-size: 16px;
+        }
+
+        .add-group-btn {
+          width: 32px;
+          height: 32px;
+          font-size: 16px;
+        }
+
+        .content-area {
+          padding: 12px;
+        }
+
+        .word-card {
+          padding: 12px;
+        }
+
+        .controls {
+          gap: 4px;
+        }
+
+        .toggle-btn {
+          font-size: 10px;
+          padding: 6px 10px;
+        }
       }
 
-      .filter-unfamiliar {
-        background: #ffc107;
-        color: #212529;
-      }
+      /* 暗色模式支持 */
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #121212;
+          color: #e0e0e0;
+        }
 
-      .filter-unfamiliar:hover {
-        background: #e0a800;
-      }
+        .container,
+        .header,
+        .tab-container {
+          background: #1e1e1e;
+        }
 
-      .filter-unfamiliar.active {
-        background: #fd7e14;
-        color: white;
+        .sidebar {
+          background: #2a2a2a;
+        }
+
+        .group-item {
+          background: #2a2a2a;
+          border-color: #404040;
+          color: #e0e0e0;
+        }
+
+        .group-item.active {
+          background: #fff;
+          color: #333;
+        }
+
+        .word-card,
+        .add-word-form,
+        .modal-content {
+          background: #2a2a2a;
+          border-color: #404040;
+        }
+
+        input[type="text"],
+        textarea {
+          background: #1e1e1e;
+          border-color: #404040;
+          color: #e0e0e0;
+        }
+
+        .word-text {
+          background: #1e1e1e;
+        }
+
+        .stat-item {
+          background: #1e1e1e;
+        }
       }
     </style>
   </head>
   <body>
     <div class="container">
       <div class="header">
-        <h1>📚 背单词</h1>
-      </div>
-
-      <div class="controls">
-        <div class="control-row">
-          <input type="text" id="groupName" placeholder="输入新组别名称" />
-          <button onclick="addGroup()">添加组别</button>
-        </div>
-
-        <div class="control-row">
-          <input type="text" id="englishWord" placeholder="英文单词/短语" />
-          <input type="text" id="chineseMeaning" placeholder="中文释义" />
-          <button onclick="addWord()">添加单词</button>
+        <h1>背单词</h1>
+        <div class="header-actions">
+          <div class="sync-status" id="syncStatus">未同步</div>
+          <button class="add-group-btn" onclick="showAddGroupModal()">+</button>
         </div>
       </div>
 
-      <div class="group-selector">
-        <select id="groupSelect" onchange="switchGroup()">
-          <option value="">选择组别</option>
-        </select>
-        <button onclick="deleteCurrentGroup()" class="btn-danger">
-          删除当前组
-        </button>
-      </div>
-
-      <div class="toggle-buttons">
-        <button
-          onclick="toggleHideMode('chinese')"
-          id="hideChinese"
-          class="btn-secondary"
-        >
-          隐藏中文
-        </button>
-        <button
-          onclick="toggleHideMode('english')"
-          id="hideEnglish"
-          class="btn-secondary"
-        >
-          隐藏英文
-        </button>
-        <button
-          onclick="switchLanguage()"
-          id="switchLang"
-          class="btn-secondary"
-        >
-          中英互换
-        </button>
-        <button
-          onclick="toggleUnfamiliarFilter()"
-          id="filterBtn"
-          class="filter-unfamiliar"
-        >
-          仅显示不熟单词
-        </button>
-      </div>
-
-      <div class="stats" id="stats">
-        <div class="stat-item">
-          <div class="stat-number" id="totalWords">0</div>
-          <div class="stat-label">总单词数</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-number" id="familiarWords">0</div>
-          <div class="stat-label">已掌握</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-number" id="unfamiliarWords">0</div>
-          <div class="stat-label">待复习</div>
+      <div class="tab-container">
+        <div class="tabs">
+          <div class="tab active" data-type="words">单词</div>
+          <div class="tab" data-type="phrases">短语</div>
         </div>
       </div>
 
-      <div id="wordsList">
-        <div class="empty-state">
-          <h3>还没有单词</h3>
-          <p>请先添加组别，然后添加单词开始学习</p>
+      <div class="main-content">
+        <div class="sidebar">
+          <div class="group-list-container" id="groupList"></div>
+        </div>
+
+        <div class="content-area">
+          <div class="content-header">
+            <h2 class="content-title" id="contentTitle">选择组别</h2>
+            <div class="controls">
+              <button
+                class="toggle-btn"
+                id="hideChinese"
+                onclick="toggleHideMode('chinese')"
+              >
+                隐藏中文
+              </button>
+              <button
+                class="toggle-btn"
+                id="hideEnglish"
+                onclick="toggleHideMode('english')"
+              >
+                隐藏英文
+              </button>
+              <button
+                class="toggle-btn"
+                id="switchLang"
+                onclick="switchLanguage()"
+              >
+                中英互换
+              </button>
+              <button
+                class="toggle-btn"
+                id="filterBtn"
+                onclick="toggleUnfamiliarFilter()"
+              >
+                仅显示不熟
+              </button>
+            </div>
+          </div>
+
+          <div class="add-word-form" id="addWordForm">
+            <div class="form-row">
+              <input type="text" id="englishWord" placeholder="英文单词/短语" />
+            </div>
+            <div class="form-row">
+              <input type="text" id="chineseMeaning" placeholder="中文释义" />
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" onclick="addWord()">添加</button>
+              <button class="btn btn-secondary" onclick="hideAddWordForm()">
+                取消
+              </button>
+            </div>
+          </div>
+
+          <div class="stats" id="stats" style="display: none">
+            <div class="stat-item">
+              <div class="stat-number" id="totalWords">0</div>
+              <div class="stat-label">总数</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number" id="familiarWords">0</div>
+              <div class="stat-label">已掌握</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number" id="unfamiliarWords">0</div>
+              <div class="stat-label">待复习</div>
+            </div>
+          </div>
+
+          <div id="wordsList">
+            <div class="empty-state">
+              <h3>选择或创建组别开始学习</h3>
+              <p>点击右上角的 + 号添加新的单词组或短语组</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 添加组别模态框 -->
+    <div class="modal" id="addGroupModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">添加新组别</h3>
+        </div>
+        <div class="modal-body">
+          <div class="github-config" id="githubConfig" style="display: none">
+            <h4>GitHub 同步配置</h4>
+            <input
+              type="text"
+              id="githubToken"
+              placeholder="GitHub Personal Access Token"
+              style="width: 100%; margin-bottom: 8px"
+            />
+            <input
+              type="text"
+              id="githubRepo"
+              placeholder="用户名/仓库名 (例: username/vocabulary)"
+              style="width: 100%; margin-bottom: 8px"
+            />
+            <div class="help-text">
+              需要在 GitHub 设置中创建 Personal Access Token，权限需要包含
+              repo。<br />
+              仓库会自动创建，如果已存在会直接使用。
+            </div>
+          </div>
+          <input
+            type="text"
+            id="groupName"
+            placeholder="输入组别名称"
+            style="width: 100%; margin-bottom: 16px"
+          />
+          <div>
+            <label
+              style="
+                display: block;
+                margin-bottom: 8px;
+                color: #6c757d;
+                font-size: 14px;
+              "
+              >类型:</label
+            >
+            <div class="radio-group">
+              <label class="radio-item">
+                <input type="radio" name="groupType" value="words" checked />
+                <span>单词</span>
+              </label>
+              <label class="radio-item">
+                <input type="radio" name="groupType" value="phrases" />
+                <span>短语</span>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="hideAddGroupModal()">
+            取消
+          </button>
+          <button class="btn btn-primary" onclick="addGroup()">创建</button>
         </div>
       </div>
     </div>
 
     <script>
-      let groups = JSON.parse(localStorage.getItem("vocabularyGroups")) || {};
-      let currentGroup = localStorage.getItem("currentGroup") || "";
-      let hideMode = "none"; // 'chinese', 'english', 'none'
-      let isLanguageSwitched = false;
-      let showOnlyUnfamiliar = false;
+      class VocabularyApp {
+        constructor() {
+          this.data = {
+            words: JSON.parse(localStorage.getItem("vocabularyWords")) || {},
+            phrases:
+              JSON.parse(localStorage.getItem("vocabularyPhrases")) || {},
+          };
+          this.currentType = "words";
+          this.currentGroup = "";
+          this.hideMode = "none";
+          this.isLanguageSwitched = false;
+          this.showOnlyUnfamiliar = false;
+          this.githubToken = localStorage.getItem("githubToken") || "";
+          this.githubRepo = localStorage.getItem("githubRepo") || "";
+          this.syncInProgress = false;
 
-      function saveData() {
-        localStorage.setItem("vocabularyGroups", JSON.stringify(groups));
-        localStorage.setItem("currentGroup", currentGroup);
-      }
-
-      function addGroup() {
-        const groupName = document.getElementById("groupName").value.trim();
-        if (!groupName) {
-          alert("请输入组别名称");
-          return;
-        }
-        if (groups[groupName]) {
-          alert("组别已存在");
-          return;
-        }
-        groups[groupName] = [];
-        document.getElementById("groupName").value = "";
-        updateGroupSelector();
-        saveData();
-      }
-
-      function addWord() {
-        if (!currentGroup) {
-          alert("请先选择组别");
-          return;
-        }
-        const english = document.getElementById("englishWord").value.trim();
-        const chinese = document.getElementById("chineseMeaning").value.trim();
-
-        if (!english || !chinese) {
-          alert("请输入英文和中文");
-          return;
+          this.init();
+          this.setupGitHubSync();
         }
 
-        const word = {
-          id: Date.now(),
-          english: english,
-          chinese: chinese,
-          status: "unknown", // 'unknown', 'familiar', 'unfamiliar'
-        };
-
-        groups[currentGroup].push(word);
-        document.getElementById("englishWord").value = "";
-        document.getElementById("chineseMeaning").value = "";
-        displayWords();
-        saveData();
-      }
-
-      function deleteWord(groupName, wordId) {
-        if (confirm("确定要删除这个单词吗？")) {
-          groups[groupName] = groups[groupName].filter(
-            (word) => word.id !== wordId
-          );
-          displayWords();
-          saveData();
-        }
-      }
-
-      function deleteCurrentGroup() {
-        if (!currentGroup) {
-          alert("请先选择组别");
-          return;
-        }
-        if (confirm(`确定要删除组别"${currentGroup}"及其所有单词吗？`)) {
-          delete groups[currentGroup];
-          currentGroup = "";
-          updateGroupSelector();
-          displayWords();
-          saveData();
-        }
-      }
-
-      function updateGroupSelector() {
-        const select = document.getElementById("groupSelect");
-        select.innerHTML = '<option value="">选择组别</option>';
-
-        Object.keys(groups).forEach((groupName) => {
-          const option = document.createElement("option");
-          option.value = groupName;
-          option.textContent = `${groupName} (${groups[groupName].length})`;
-          select.appendChild(option);
-        });
-
-        select.value = currentGroup;
-      }
-
-      function switchGroup() {
-        const select = document.getElementById("groupSelect");
-        currentGroup = select.value;
-        displayWords();
-        saveData();
-      }
-
-      function toggleWordStatus(groupName, wordId) {
-        const word = groups[groupName].find((w) => w.id === wordId);
-        if (word) {
-          const statusCycle = ["unknown", "familiar", "unfamiliar"];
-          const currentIndex = statusCycle.indexOf(word.status);
-          word.status = statusCycle[(currentIndex + 1) % statusCycle.length];
-          displayWords();
-          saveData();
-        }
-      }
-
-      function toggleHideMode(mode) {
-        hideMode = hideMode === mode ? "none" : mode;
-        updateToggleButtons();
-        displayWords();
-      }
-
-      function switchLanguage() {
-        isLanguageSwitched = !isLanguageSwitched;
-        updateToggleButtons();
-        displayWords();
-      }
-
-      function toggleUnfamiliarFilter() {
-        showOnlyUnfamiliar = !showOnlyUnfamiliar;
-        updateToggleButtons();
-        displayWords();
-      }
-
-      function updateToggleButtons() {
-        const hideChinese = document.getElementById("hideChinese");
-        const hideEnglish = document.getElementById("hideEnglish");
-        const switchLang = document.getElementById("switchLang");
-        const filterBtn = document.getElementById("filterBtn");
-
-        hideChinese.className =
-          hideMode === "chinese" ? "btn-success" : "btn-secondary";
-        hideEnglish.className =
-          hideMode === "english" ? "btn-success" : "btn-secondary";
-        switchLang.className = isLanguageSwitched
-          ? "btn-success"
-          : "btn-secondary";
-        filterBtn.className = showOnlyUnfamiliar
-          ? "filter-unfamiliar active"
-          : "filter-unfamiliar";
-
-        hideChinese.textContent =
-          hideMode === "chinese" ? "显示中文" : "隐藏中文";
-        hideEnglish.textContent =
-          hideMode === "english" ? "显示英文" : "隐藏英文";
-        switchLang.textContent = isLanguageSwitched ? "恢复顺序" : "中英互换";
-        filterBtn.textContent = showOnlyUnfamiliar
-          ? "显示全部"
-          : "仅显示不熟单词";
-      }
-
-      function revealText(element) {
-        if (element.classList.contains("hidden")) {
-          element.classList.remove("hidden");
-        }
-      }
-
-      function getStatusIcon(status) {
-        switch (status) {
-          case "familiar":
-            return "✓";
-          case "unfamiliar":
-            return "✗";
-          default:
-            return "?";
-        }
-      }
-
-      function getStatusClass(status) {
-        switch (status) {
-          case "familiar":
-            return "status-familiar";
-          case "unfamiliar":
-            return "status-unfamiliar";
-          default:
-            return "status-unknown";
-        }
-      }
-
-      function updateStats() {
-        if (!currentGroup || !groups[currentGroup]) {
-          document.getElementById("totalWords").textContent = "0";
-          document.getElementById("familiarWords").textContent = "0";
-          document.getElementById("unfamiliarWords").textContent = "0";
-          return;
+        init() {
+          this.updateTabs();
+          this.updateGroupList();
+          this.displayContent();
+          this.setupEventListeners();
+          this.checkGitHubConfig();
         }
 
-        const words = groups[currentGroup];
-        const total = words.length;
-        const familiar = words.filter((w) => w.status === "familiar").length;
-        const unfamiliar = words.filter(
-          (w) => w.status === "unfamiliar"
-        ).length;
+        setupEventListeners() {
+          // 触摸事件优化
+          document.addEventListener("touchstart", function () {}, {
+            passive: true,
+          });
 
-        document.getElementById("totalWords").textContent = total;
-        document.getElementById("familiarWords").textContent = familiar;
-        document.getElementById("unfamiliarWords").textContent = unfamiliar;
-      }
+          // 模态框点击外部关闭
+          document
+            .getElementById("addGroupModal")
+            .addEventListener("click", (e) => {
+              if (e.target === e.currentTarget) {
+                this.hideAddGroupModal();
+              }
+            });
 
-      function displayWords() {
-        const wordsContainer = document.getElementById("wordsList");
+          // 回车键事件
+          document
+            .getElementById("chineseMeaning")
+            .addEventListener("keypress", (e) => {
+              if (e.key === "Enter") {
+                this.addWord();
+              }
+            });
 
-        if (
-          !currentGroup ||
-          !groups[currentGroup] ||
-          groups[currentGroup].length === 0
-        ) {
-          wordsContainer.innerHTML = `
-                    <div class="empty-state">
-                        <h3>${!currentGroup ? "请选择组别" : "暂无单词"}</h3>
-                        <p>${
-                          !currentGroup
-                            ? "请先选择一个组别"
-                            : '点击上方"添加单词"开始添加'
-                        }</p>
-                    </div>
-                `;
-          updateStats();
-          return;
+          document
+            .getElementById("groupName")
+            .addEventListener("keypress", (e) => {
+              if (e.key === "Enter") {
+                this.addGroup();
+              }
+            });
+
+          // 防止页面缩放
+          document.addEventListener("gesturestart", function (e) {
+            e.preventDefault();
+          });
         }
 
-        let wordsToShow = groups[currentGroup];
-
-        // 筛选不熟悉的单词
-        if (showOnlyUnfamiliar) {
-          wordsToShow = wordsToShow.filter(
-            (word) => word.status === "unfamiliar"
-          );
+        checkGitHubConfig() {
+          if (!this.githubToken || !this.githubRepo) {
+            document.getElementById("githubConfig").style.display = "block";
+            document.getElementById("githubToken").value = this.githubToken;
+            document.getElementById("githubRepo").value = this.githubRepo;
+          }
         }
 
-        if (wordsToShow.length === 0) {
-          wordsContainer.innerHTML = `
-                    <div class="empty-state">
-                        <h3>没有符合条件的单词</h3>
-                        <p>当前筛选条件下没有单词显示</p>
-                    </div>
-                `;
-          updateStats();
-          return;
+        updateTabs() {
+          document.querySelectorAll(".tab").forEach((tab) => {
+            tab.classList.toggle(
+              "active",
+              tab.dataset.type === this.currentType
+            );
+            tab.onclick = () => this.switchType(tab.dataset.type);
+          });
         }
 
-        const wordsHtml = wordsToShow
-          .map((word) => {
-            const leftText = isLanguageSwitched ? word.chinese : word.english;
-            const rightText = isLanguageSwitched ? word.english : word.chinese;
-            const leftHide =
-              (hideMode === "chinese" && !isLanguageSwitched) ||
-              (hideMode === "english" && isLanguageSwitched);
-            const rightHide =
-              (hideMode === "english" && !isLanguageSwitched) ||
-              (hideMode === "chinese" && isLanguageSwitched);
+        switchType(type) {
+          this.currentType = type;
+          this.currentGroup = "";
+          this.updateTabs();
+          this.updateGroupList();
+          this.displayContent();
+        }
 
-            return `
-                    <div class="word-item">
+        showAddGroupModal() {
+          document.getElementById("addGroupModal").classList.add("show");
+          document.getElementById("groupName").focus();
+        }
+
+        hideAddGroupModal() {
+          document.getElementById("addGroupModal").classList.remove("show");
+          document.getElementById("groupName").value = "";
+        }
+
+        async addGroup() {
+          const groupName = document.getElementById("groupName").value.trim();
+          const groupType = document.querySelector(
+            'input[name="groupType"]:checked'
+          ).value;
+
+          // 保存GitHub配置
+          const token = document.getElementById("githubToken").value.trim();
+          const repo = document.getElementById("githubRepo").value.trim();
+
+          if (token && repo) {
+            this.githubToken = token;
+            this.githubRepo = repo;
+            localStorage.setItem("githubToken", token);
+            localStorage.setItem("githubRepo", repo);
+          }
+
+          if (!groupName) {
+            alert("请输入组别名称");
+            return;
+          }
+
+          if (this.data[groupType][groupName]) {
+            alert("组别已存在");
+            return;
+          }
+
+          this.data[groupType][groupName] = [];
+          this.currentType = groupType;
+          this.currentGroup = groupName;
+
+          await this.saveData();
+          this.updateTabs();
+          this.updateGroupList();
+          this.displayContent();
+          this.hideAddGroupModal();
+        }
+
+        updateGroupList() {
+          const groupList = document.getElementById("groupList");
+          const groups = this.data[this.currentType];
+
+          if (Object.keys(groups).length === 0) {
+            groupList.innerHTML =
+              '<div style="padding: 20px; text-align: center; color: #6c757d; font-size: 14px;">暂无组别</div>';
+            return;
+          }
+
+          groupList.innerHTML = "";
+          Object.keys(groups).forEach((groupName) => {
+            const groupItem = document.createElement("div");
+            groupItem.className = `group-item ${
+              this.currentGroup === groupName ? "active" : ""
+            }`;
+            groupItem.innerHTML = `
+                        <span class="group-name">${groupName}</span>
+                        <span class="group-count">${groups[groupName].length}</span>
+                    `;
+            groupItem.onclick = () => {
+              this.currentGroup = groupName;
+              this.updateGroupList();
+              this.displayContent();
+            };
+            groupList.appendChild(groupItem);
+          });
+
+          // 如果没有选中的组别，默认选中第一个
+          if (!this.currentGroup && Object.keys(groups).length > 0) {
+            this.currentGroup = Object.keys(groups)[0];
+            this.updateGroupList();
+            this.displayContent();
+          }
+        }
+
+        displayContent() {
+          const contentTitle = document.getElementById("contentTitle");
+          const addWordForm = document.getElementById("addWordForm");
+          const stats = document.getElementById("stats");
+          const wordsList = document.getElementById("wordsList");
+
+          if (!this.currentGroup) {
+            contentTitle.textContent = "选择组别";
+            addWordForm.style.display = "none";
+            stats.style.display = "none";
+            wordsList.innerHTML = `
+                        <div class="empty-state">
+                            <h3>选择或创建组别开始学习</h3>
+                            <p>点击右上角的 + 号添加新的${
+                              this.currentType === "words" ? "单词" : "短语"
+                            }组</p>
+                        </div>
+                    `;
+            return;
+          }
+
+          contentTitle.textContent = this.currentGroup;
+          addWordForm.classList.add("show");
+          stats.style.display = "grid";
+
+          const words = this.data[this.currentType][this.currentGroup] || [];
+          this.displayWords(words);
+          this.updateStats(words);
+        }
+
+        displayWords(words) {
+          const wordsList = document.getElementById("wordsList");
+
+          if (words.length === 0) {
+            wordsList.innerHTML = `
+                        <div class="empty-state">
+                            <h3>还没有${
+                              this.currentType === "words" ? "单词" : "短语"
+                            }</h3>
+                            <p>在上方输入框中添加新的${
+                              this.currentType === "words" ? "单词" : "短语"
+                            }</p>
+                        </div>
+                    `;
+            return;
+          }
+
+          let filteredWords = this.showOnlyUnfamiliar
+            ? words.filter((word) => word.status === "unfamiliar")
+            : words;
+
+          if (filteredWords.length === 0 && this.showOnlyUnfamiliar) {
+            wordsList.innerHTML = `
+                        <div class="empty-state">
+                            <h3>没有不熟悉的${
+                              this.currentType === "words" ? "单词" : "短语"
+                            }</h3>
+                            <p>所有${
+                              this.currentType === "words" ? "单词" : "短语"
+                            }都已掌握</p>
+                        </div>
+                    `;
+            return;
+          }
+
+          wordsList.innerHTML = filteredWords
+            .map(
+              (word) => `
+                    <div class="word-card">
                         <div class="word-content">
                             <div class="word-text ${
-                              leftHide ? "hidden" : ""
-                            }" onclick="revealText(this)">
-                                ${leftText}
+                              this.hideMode === "english" ? "hidden" : ""
+                            }" 
+                                 onclick="this.classList.toggle('hidden')">
+                                ${
+                                  this.isLanguageSwitched
+                                    ? word.chinese
+                                    : word.english
+                                }
                             </div>
                             <div class="word-text ${
-                              rightHide ? "hidden" : ""
-                            }" onclick="revealText(this)">
-                                ${rightText}
+                              this.hideMode === "chinese" ? "hidden" : ""
+                            }" 
+                                 onclick="this.classList.toggle('hidden')">
+                                ${
+                                  this.isLanguageSwitched
+                                    ? word.english
+                                    : word.chinese
+                                }
                             </div>
                         </div>
                         <div class="word-actions">
-                            <button class="word-status ${getStatusClass(
-                              word.status
-                            )}" 
-                                    onclick="toggleWordStatus('${currentGroup}', ${
-              word.id
-            })"
-                                    title="点击切换状态: 未知 → 熟悉 → 不熟 → 未知">
-                                ${getStatusIcon(word.status)}
+                            <div class="status-buttons">
+                                <button class="status-btn ${
+                                  word.status === "familiar" ? "familiar" : ""
+                                }" 
+                                        onclick="app.updateWordStatus('${
+                                          word.id
+                                        }', 'familiar')" title="已掌握">
+                                    ✓
+                                </button>
+                                <button class="status-btn ${
+                                  word.status === "unfamiliar"
+                                    ? "unfamiliar"
+                                    : ""
+                                }" 
+                                        onclick="app.updateWordStatus('${
+                                          word.id
+                                        }', 'unfamiliar')" title="不熟悉">
+                                    ✗
+                                </button>
+                            </div>
+                            <button class="delete-btn" onclick="app.deleteWord('${
+                              word.id
+                            }')" title="删除">
+                                🗑
                             </button>
-                            <button class="delete-word" onclick="deleteWord('${currentGroup}', ${
-              word.id
-            })">×</button>
                         </div>
                     </div>
-                `;
-          })
-          .join("");
+                `
+            )
+            .join("");
+        }
 
-        wordsContainer.innerHTML = `
-                <div class="word-card">
-                    <h3 style="margin-bottom: 20px; color: #667eea;">${currentGroup}</h3>
-                    ${wordsHtml}
-                </div>
-            `;
+        updateStats(words) {
+          const total = words.length;
+          const familiar = words.filter(
+            (word) => word.status === "familiar"
+          ).length;
+          const unfamiliar = words.filter(
+            (word) => word.status === "unfamiliar"
+          ).length;
 
-        updateStats();
+          document.getElementById("totalWords").textContent = total;
+          document.getElementById("familiarWords").textContent = familiar;
+          document.getElementById("unfamiliarWords").textContent = unfamiliar;
+        }
+
+        showAddWordForm() {
+          document.getElementById("addWordForm").classList.add("show");
+          document.getElementById("englishWord").focus();
+        }
+
+        hideAddWordForm() {
+          document.getElementById("addWordForm").classList.remove("show");
+          document.getElementById("englishWord").value = "";
+          document.getElementById("chineseMeaning").value = "";
+        }
+
+        async addWord() {
+          const english = document.getElementById("englishWord").value.trim();
+          const chinese = document
+            .getElementById("chineseMeaning")
+            .value.trim();
+
+          if (!english || !chinese) {
+            alert(
+              `请填写完整的${
+                this.currentType === "words" ? "单词" : "短语"
+              }信息`
+            );
+            return;
+          }
+
+          const word = {
+            id: Date.now().toString(),
+            english,
+            chinese,
+            status: "unfamiliar",
+            createdAt: new Date().toISOString(),
+          };
+
+          if (!this.data[this.currentType][this.currentGroup]) {
+            this.data[this.currentType][this.currentGroup] = [];
+          }
+
+          this.data[this.currentType][this.currentGroup].push(word);
+          await this.saveData();
+          this.displayContent();
+          this.hideAddWordForm();
+        }
+
+        async updateWordStatus(wordId, status) {
+          const words = this.data[this.currentType][this.currentGroup];
+          const word = words.find((w) => w.id === wordId);
+          if (word) {
+            word.status = word.status === status ? "neutral" : status;
+            await this.saveData();
+            this.displayContent();
+          }
+        }
+
+        async deleteWord(wordId) {
+          if (
+            !confirm(
+              "确定要删除这个" +
+                (this.currentType === "words" ? "单词" : "短语") +
+                "吗？"
+            )
+          ) {
+            return;
+          }
+
+          const words = this.data[this.currentType][this.currentGroup];
+          const index = words.findIndex((w) => w.id === wordId);
+          if (index !== -1) {
+            words.splice(index, 1);
+            await this.saveData();
+            this.displayContent();
+          }
+        }
+
+        toggleHideMode(mode) {
+          this.hideMode = this.hideMode === mode ? "none" : mode;
+
+          document
+            .getElementById("hideChinese")
+            .classList.toggle("active", this.hideMode === "chinese");
+          document
+            .getElementById("hideEnglish")
+            .classList.toggle("active", this.hideMode === "english");
+
+          this.displayContent();
+        }
+
+        switchLanguage() {
+          this.isLanguageSwitched = !this.isLanguageSwitched;
+          document
+            .getElementById("switchLang")
+            .classList.toggle("active", this.isLanguageSwitched);
+          this.displayContent();
+        }
+
+        toggleUnfamiliarFilter() {
+          this.showOnlyUnfamiliar = !this.showOnlyUnfamiliar;
+          document
+            .getElementById("filterBtn")
+            .classList.toggle("active", this.showOnlyUnfamiliar);
+          this.displayContent();
+        }
+
+        async saveData() {
+          // 本地存储
+          localStorage.setItem(
+            "vocabularyWords",
+            JSON.stringify(this.data.words)
+          );
+          localStorage.setItem(
+            "vocabularyPhrases",
+            JSON.stringify(this.data.phrases)
+          );
+
+          // GitHub 同步
+          if (this.githubToken && this.githubRepo && !this.syncInProgress) {
+            await this.syncToGitHub();
+          }
+        }
+
+        setupGitHubSync() {
+          // 启动时从GitHub加载数据
+          if (this.githubToken && this.githubRepo) {
+            this.loadFromGitHub();
+          }
+
+          // 定期同步（可选）
+          setInterval(() => {
+            if (this.githubToken && this.githubRepo && !this.syncInProgress) {
+              this.loadFromGitHub();
+            }
+          }, 30000); // 30秒检查一次
+        }
+
+        async syncToGitHub() {
+          if (this.syncInProgress) return;
+
+          this.syncInProgress = true;
+          this.updateSyncStatus("syncing", "同步中...");
+
+          try {
+            const data = {
+              words: this.data.words,
+              phrases: this.data.phrases,
+              lastModified: new Date().toISOString(),
+            };
+
+            // 检查仓库是否存在，不存在则创建
+            const repoExists = await this.checkRepository();
+            if (!repoExists) {
+              await this.createRepository();
+            }
+
+            // 获取现有文件的SHA（如果存在）
+            let sha = null;
+            try {
+              const response = await fetch(
+                `https://api.github.com/repos/${this.githubRepo}/contents/vocabulary.json`,
+                {
+                  headers: {
+                    Authorization: `token ${this.githubToken}`,
+                    Accept: "application/vnd.github.v3+json",
+                  },
+                }
+              );
+
+              if (response.ok) {
+                const fileData = await response.json();
+                sha = fileData.sha;
+              }
+            } catch (e) {
+              // 文件不存在，继续创建
+            }
+
+            // 上传/更新文件
+            const content = btoa(
+              unescape(encodeURIComponent(JSON.stringify(data, null, 2)))
+            );
+            const uploadData = {
+              message: `更新词汇数据 - ${new Date().toLocaleString("zh-CN")}`,
+              content: content,
+            };
+
+            if (sha) {
+              uploadData.sha = sha;
+            }
+
+            const uploadResponse = await fetch(
+              `https://api.github.com/repos/${this.githubRepo}/contents/vocabulary.json`,
+              {
+                method: "PUT",
+                headers: {
+                  Authorization: `token ${this.githubToken}`,
+                  Accept: "application/vnd.github.v3+json",
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(uploadData),
+              }
+            );
+
+            if (uploadResponse.ok) {
+              this.updateSyncStatus("synced", "已同步");
+            } else {
+              throw new Error(`上传失败: ${uploadResponse.status}`);
+            }
+          } catch (error) {
+            console.error("GitHub同步失败:", error);
+            this.updateSyncStatus("error", "同步失败");
+          } finally {
+            this.syncInProgress = false;
+          }
+        }
+
+        async loadFromGitHub() {
+          if (this.syncInProgress) return;
+
+          try {
+            const response = await fetch(
+              `https://api.github.com/repos/${this.githubRepo}/contents/vocabulary.json`,
+              {
+                headers: {
+                  Authorization: `token ${this.githubToken}`,
+                  Accept: "application/vnd.github.v3+json",
+                },
+              }
+            );
+
+            if (response.ok) {
+              const fileData = await response.json();
+              const content = JSON.parse(
+                decodeURIComponent(escape(atob(fileData.content)))
+              );
+
+              // 合并数据（保留本地较新的数据）
+              if (content.words) {
+                this.mergeData("words", content.words);
+              }
+              if (content.phrases) {
+                this.mergeData("phrases", content.phrases);
+              }
+
+              // 更新本地存储
+              localStorage.setItem(
+                "vocabularyWords",
+                JSON.stringify(this.data.words)
+              );
+              localStorage.setItem(
+                "vocabularyPhrases",
+                JSON.stringify(this.data.phrases)
+              );
+
+              // 刷新界面
+              this.updateGroupList();
+              this.displayContent();
+
+              this.updateSyncStatus("synced", "已同步");
+            }
+          } catch (error) {
+            console.error("从GitHub加载数据失败:", error);
+          }
+        }
+
+        mergeData(type, remoteData) {
+          const localData = this.data[type];
+
+          for (const [groupName, remoteWords] of Object.entries(remoteData)) {
+            if (!localData[groupName]) {
+              localData[groupName] = remoteWords;
+            } else {
+              // 合并单词，优先保留较新的版本
+              const localWords = localData[groupName];
+              const mergedWords = [...localWords];
+
+              remoteWords.forEach((remoteWord) => {
+                const existingIndex = mergedWords.findIndex(
+                  (w) => w.id === remoteWord.id
+                );
+                if (existingIndex === -1) {
+                  mergedWords.push(remoteWord);
+                } else {
+                  // 比较修改时间，保留较新的
+                  const localWord = mergedWords[existingIndex];
+                  const remoteTime = new Date(remoteWord.createdAt || 0);
+                  const localTime = new Date(localWord.createdAt || 0);
+
+                  if (remoteTime > localTime) {
+                    mergedWords[existingIndex] = remoteWord;
+                  }
+                }
+              });
+
+              localData[groupName] = mergedWords;
+            }
+          }
+        }
+
+        async checkRepository() {
+          try {
+            const response = await fetch(
+              `https://api.github.com/repos/${this.githubRepo}`,
+              {
+                headers: {
+                  Authorization: `token ${this.githubToken}`,
+                  Accept: "application/vnd.github.v3+json",
+                },
+              }
+            );
+            return response.ok;
+          } catch (error) {
+            return false;
+          }
+        }
+
+        async createRepository() {
+          const repoName = this.githubRepo.split("/")[1];
+
+          try {
+            const response = await fetch("https://api.github.com/user/repos", {
+              method: "POST",
+              headers: {
+                Authorization: `token ${this.githubToken}`,
+                Accept: "application/vnd.github.v3+json",
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                name: repoName,
+                description: "词汇学习数据存储",
+                private: true,
+                auto_init: true,
+              }),
+            });
+
+            if (!response.ok) {
+              throw new Error(`创建仓库失败: ${response.status}`);
+            }
+          } catch (error) {
+            console.error("创建GitHub仓库失败:", error);
+            throw error;
+          }
+        }
+
+        updateSyncStatus(status, text) {
+          const syncStatus = document.getElementById("syncStatus");
+          syncStatus.className = `sync-status ${status}`;
+          syncStatus.textContent = text;
+
+          // 3秒后恢复默认状态
+          if (status === "synced" || status === "error") {
+            setTimeout(() => {
+              syncStatus.className = "sync-status";
+              syncStatus.textContent = "已配置同步";
+            }, 3000);
+          }
+        }
       }
 
-      // 初始化
-      function init() {
-        updateGroupSelector();
-        displayWords();
-        updateToggleButtons();
+      // 全局函数（保持与HTML的兼容性）
+      let app;
+
+      window.addEventListener("DOMContentLoaded", () => {
+        app = new VocabularyApp();
+      });
+
+      function showAddGroupModal() {
+        app.showAddGroupModal();
       }
 
-      // 页面加载完成后初始化
-      document.addEventListener("DOMContentLoaded", init);
+      function hideAddGroupModal() {
+        app.hideAddGroupModal();
+      }
+
+      function addGroup() {
+        app.addGroup();
+      }
+
+      function addWord() {
+        app.addWord();
+      }
+
+      function hideAddWordForm() {
+        app.hideAddWordForm();
+      }
+
+      function toggleHideMode(mode) {
+        app.toggleHideMode(mode);
+      }
+
+      function switchLanguage() {
+        app.switchLanguage();
+      }
+
+      function toggleUnfamiliarFilter() {
+        app.toggleUnfamiliarFilter();
+      }
     </script>
   </body>
 </html>
